@@ -79,6 +79,9 @@ td.boss img {
     width:34px;
     height:34px;
     object-fit:contain;
+    background:#21262d;
+    border-radius:6px;
+    padding:4px;
 }
 
 .countdown {
@@ -219,7 +222,8 @@ function render(){
         <tr>
         <td>${b.lv}</td>
         <td class="boss">
-            <img src="images/${b.img}" onerror="this.style.display='none'">
+           <img src="images/${b.img}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22><rect width=%2234%22 height=%2234%22 fill=%22%2321262d%22/><text x=%2217%22 y=%2222%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2216%22>?</text></svg>'">
+
             ${b.name}
         </td>
         <td>${days[next.getDay()].slice(0,3)}</td>
