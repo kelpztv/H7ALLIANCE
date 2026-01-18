@@ -7,76 +7,96 @@
 
 <style>
 body {
-    margin: 0;
+    margin:0;
     font-family: Arial, Helvetica, sans-serif;
-    background: #0b0f14;
-    color: #e6e6e6;
+    background:#0b0f14;
+    color:#e6e6e6;
+    font-size:15px;
 }
 
 header {
-    padding: 15px 25px;
-    border-bottom: 1px solid #1f2a38;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding:16px 24px;
+    border-bottom:1px solid #1f2a38;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
 
 header h1 {
-    font-size: 20px;
-    margin: 0;
+    margin:0;
+    font-size:22px;
 }
 
 header small {
-    color: #9fb3c8;
+    color:#9fb3c8;
+    font-size:13px;
 }
 
 button {
-    background: #1f6feb;
-    border: none;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
+    background:#1f6feb;
+    border:none;
+    color:white;
+    padding:6px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:13px;
 }
 
-button.reset { background:#8b949e; }
-button.next { background:#bf8700; }
-
-.container { padding: 20px; }
+.container { padding:20px; }
 
 table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #161b22;
-    border-radius: 8px;
-    overflow: hidden;
+    width:100%;
+    border-collapse:collapse;
+    background:#161b22;
+    border-radius:10px;
+    overflow:hidden;
 }
 
-thead { background: #21262d; }
+thead {
+    background:#21262d;
+}
 
 th, td {
-    padding: 10px;
-    border-bottom: 1px solid #30363d;
-    font-size: 13px;
+    padding:12px;
+    border-bottom:1px solid #30363d;
+    vertical-align:middle;
+    text-align:center;
 }
 
-th { color: #58a6ff; }
+th {
+    color:#58a6ff;
+    font-size:14px;
+}
+
+td.boss {
+    text-align:left;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+td.boss img {
+    width:34px;
+    height:34px;
+    object-fit:contain;
+}
 
 .countdown {
-    background: #8b1d1d;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-weight: bold;
+    display:inline-block;
+    min-width:110px;
+    padding:6px 10px;
+    border-radius:8px;
+    font-weight:bold;
+    background:#8b1d1d;
 }
 
-.spawned { background:#2ea043; }
 .warning { background:#f85149; }
+.spawned { background:#2ea043; }
 
 .footer {
     text-align:center;
     color:#8b949e;
-    font-size:12px;
+    font-size:13px;
     margin-top:15px;
 }
 </style>
@@ -85,11 +105,11 @@ th { color: #58a6ff; }
 <body>
 
 <header>
-    <div>
-        <h1>H7 ALLIANCE BOSS SPAWN TIMER</h1>
-        <small>All times based on Asia / Manila (UTC+8)</small>
-    </div>
-    <button onclick="loginAdmin()">Admin Login</button>
+<div>
+<h1>H7 ALLIANCE BOSS SPAWN TIMER</h1>
+<small>All times based on Asia / Manila (UTC+8)</small>
+</div>
+<button onclick="loginAdmin()">Admin Login</button>
 </header>
 
 <div class="container">
@@ -112,49 +132,36 @@ th { color: #58a6ff; }
 </div>
 
 <script>
-const ADMIN_PASSWORD = "H7bossings";
-let isAdmin = false;
+const ADMIN_PASSWORD="H7bossings";
+const DISCORD_WEBHOOK="PASTE_YOUR_DISCORD_WEBHOOK_URL_HERE";
+let isAdmin=false;
+let alerted={};
 
-const BOSSES = [
-/* INTERVAL */
-{lv:60,name:"Venatus",type:"interval",hours:10},
-{lv:65,name:"Viorent",type:"interval",hours:10},
-{lv:70,name:"Ego",type:"interval",hours:21},
-{lv:75,name:"Livera",type:"interval",hours:24},
-{lv:75,name:"Araneo",type:"interval",hours:24},
-{lv:80,name:"Undomiel",type:"interval",hours:24},
-{lv:85,name:"Lady Dalia",type:"interval",hours:18},
-{lv:85,name:"General Aquleus",type:"interval",hours:29},
-{lv:88,name:"Amentis",type:"interval",hours:29},
-{lv:88,name:"Baron Braudmore",type:"interval",hours:32},
-{lv:98,name:"Gareth",type:"interval",hours:32},
-{lv:95,name:"Shuliar",type:"interval",hours:35},
-{lv:98,name:"Larba",type:"interval",hours:35},
-{lv:100,name:"Catena",type:"interval",hours:35},
-{lv:98,name:"Titore",type:"interval",hours:37},
-{lv:93,name:"Wannitas",type:"interval",hours:48},
-{lv:93,name:"Metus",type:"interval",hours:48},
-{lv:93,name:"Duplican",type:"interval",hours:48},
-{lv:100,name:"Secreta",type:"interval",hours:62},
-{lv:100,name:"Ordo",type:"interval",hours:62},
-{lv:100,name:"Asta",type:"interval",hours:62},
-{lv:100,name:"Supore",type:"interval",hours:62},
+const days=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
-/* FIXED */
-{lv:90,name:"Milavy",type:"fixed",days:["Saturday"],time:"17:00"},
-{lv:95,name:"Ringor",type:"fixed",days:["Saturday"],time:"19:00"},
-{lv:95,name:"Roderick",type:"fixed",days:["Friday"],time:"21:00"},
-{lv:120,name:"Chaiflock",type:"fixed",days:["Saturday"],time:"00:00"},
-{lv:120,name:"Benji",type:"fixed",days:["Sunday"],time:"23:00"},
-{lv:140,name:"Nevaeh",type:"fixed",days:["Sunday"],time:"00:00"},
-
-/* MULTI DAY */
-{lv:70,name:"Clemantis",type:"fixed",days:["Monday","Thursday"],time:["13:30","21:00"]},
-{lv:80,name:"Saphirus",type:"fixed",days:["Sunday","Tuesday"],time:["19:00","13:30"]},
-{lv:85,name:"Thymele",type:"fixed",days:["Monday","Wednesday"],time:["21:00","13:30"]},
-{lv:100,name:"Auraq",type:"fixed",days:["Friday","Wednesday"],time:["00:00","23:00"]},
-{lv:135,name:"Icaruthia",type:"fixed",days:["Tuesday","Friday"],time:["23:00","23:00"]},
-{lv:135,name:"Motti",type:"fixed",days:["Wednesday","Saturday"],time:["21:00","21:00"]}
+const BOSSES=[
+{lv:60,name:"Venatus",hours:10,img:"venatus.png"},
+{lv:65,name:"Viorent",hours:10,img:"viorent.png"},
+{lv:70,name:"Ego",hours:21,img:"ego.png"},
+{lv:75,name:"Livera",hours:24,img:"livera.png"},
+{lv:75,name:"Araneo",hours:24,img:"araneo.png"},
+{lv:80,name:"Undomiel",hours:24,img:"undomiel.png"},
+{lv:85,name:"Lady Dalia",hours:18,img:"ladydalia.png"},
+{lv:85,name:"General Aquleus",hours:29,img:"aquleus.png"},
+{lv:88,name:"Amentis",hours:29,img:"amentis.png"},
+{lv:88,name:"Baron Braudmore",hours:32,img:"baron.png"},
+{lv:98,name:"Gareth",hours:32,img:"gareth.png"},
+{lv:95,name:"Shuliar",hours:35,img:"shuliar.png"},
+{lv:98,name:"Larba",hours:35,img:"larba.png"},
+{lv:100,name:"Catena",hours:35,img:"catena.png"},
+{lv:98,name:"Titore",hours:37,img:"titore.png"},
+{lv:93,name:"Wannitas",hours:48,img:"wannitas.png"},
+{lv:93,name:"Metus",hours:48,img:"metus.png"},
+{lv:93,name:"Duplican",hours:48,img:"duplican.png"},
+{lv:100,name:"Secreta",hours:62,img:"secreta.png"},
+{lv:100,name:"Ordo",hours:62,img:"ordo.png"},
+{lv:100,name:"Asta",hours:62,img:"asta.png"},
+{lv:100,name:"Supore",hours:62,img:"supore.png"}
 ];
 
 function nowPH(){
@@ -171,53 +178,56 @@ function format(ms){
 }
 
 function loginAdmin(){
-    if(prompt("Admin password:")===ADMIN_PASSWORD){
+    if(prompt("Admin password:")==ADMIN_PASSWORD){
         isAdmin=true;
         render();
     }
 }
 
-function nextFixed(b){
-    let now=nowPH();
-    let best=null;
-
-    b.days.forEach((d,i)=>{
-        let t=b.time[i]||b.time[0];
-        let [hh,mm]=t.split(":");
-        let date=new Date(now);
-        let dayIndex=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].indexOf(d);
-        let diff=(dayIndex-now.getDay()+7)%7;
-        date.setDate(now.getDate()+diff);
-        date.setHours(hh,mm,0,0);
-        if(date<now) date.setDate(date.getDate()+7);
-        if(!best||date<best) best=date;
+function discordAlert(msg){
+    if(!DISCORD_WEBHOOK) return;
+    fetch(DISCORD_WEBHOOK,{
+        method:"POST",
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({content:msg})
     });
-    return best;
 }
 
 function render(){
     const tb=document.getElementById("bossTable");
     tb.innerHTML="";
     BOSSES.forEach(b=>{
-        let next=b.type==="interval"
-            ? new Date(localStorage.getItem(b.name)||(()=>{let d=nowPH();d.setHours(d.getHours()+b.hours);localStorage.setItem(b.name,d);return d;})())
-            : nextFixed(b);
+        let next=localStorage.getItem(b.name);
+        if(!next){
+            let d=nowPH();
+            d.setHours(d.getHours()+b.hours);
+            localStorage.setItem(b.name,d);
+            next=d;
+        } else next=new Date(next);
 
         let diff=next-nowPH();
-        let cls=diff<=0?"countdown spawned":diff<=300000?"countdown warning":"countdown";
+        let cls="countdown";
+        if(diff<=0) cls+=" spawned";
+        else if(diff<=300000) cls+=" warning";
+
+        if(diff<=300000 && !alerted[b.name]){
+            discordAlert(`⚠️ ${b.name} spawning in under 5 minutes!`);
+            alerted[b.name]=true;
+        }
 
         tb.innerHTML+=`
         <tr>
-            <td>${b.lv}</td>
-            <td>${b.name}</td>
-            <td>${next.toLocaleDateString("en-US",{weekday:"short"})}</td>
-            <td>${new Date(next.getTime()-3600000).toLocaleTimeString()}</td>
-            <td>${next.toLocaleTimeString()}</td>
-            <td><span class="${cls}">${format(diff)}</span></td>
-            <td>${next.toLocaleString()}</td>
-            <td>${isAdmin&&b.type==="interval"?`<button class="reset" onclick="localStorage.removeItem('${b.name}')">Reset</button>`:""}
-                ${isAdmin&&b.type==="fixed"?`<button class="next" onclick="render()">Next</button>`:""}
-            </td>
+        <td>${b.lv}</td>
+        <td class="boss">
+            <img src="images/${b.img}" onerror="this.style.display='none'">
+            ${b.name}
+        </td>
+        <td>${days[next.getDay()].slice(0,3)}</td>
+        <td>${new Date(next.getTime()-3600000).toLocaleTimeString()}</td>
+        <td>${next.toLocaleTimeString()}</td>
+        <td><span class="${cls}">${format(diff)}</span></td>
+        <td>${next.toLocaleString()}</td>
+        <td>${isAdmin?`<button onclick="localStorage.removeItem('${b.name}')">Reset</button>`:""}</td>
         </tr>`;
     });
 }
