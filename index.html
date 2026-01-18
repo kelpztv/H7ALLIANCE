@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>H7 Alliance Boss Spawn Timer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #0b0f14;
+    color: #e6e6e6;
+}
+
+header {
+    padding: 15px 25px;
+    border-bottom: 1px solid #1f2a38;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    font-size: 20px;
+    margin: 0;
+}
+
+header small {
+    color: #9fb3c8;
+}
+
+button {
+    background: #1f6feb;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+button.reset { background:#8b949e; }
+button.next { background:#bf8700; }
+
+.container { padding: 20px; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #161b22;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+thead { background: #21262d; }
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #30363d;
+    font-size: 13px;
+}
+
+th { color: #58a6ff; }
+
+.countdown {
+    background: #8b1d1d;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.spawned { background:#2ea043; }
+.warning { background:#f85149; }
+
+.footer {
+    text-align:center;
+    color:#8b949e;
+    font-size:12px;
+    margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <h1>H7 ALLIANCE BOSS SPAWN TIMER</h1>
+        <small>All times based on Asia / Manila (UTC+8)</small>
+    </div>
+    <button onclick="loginAdmin()">Admin Login</button>
+</header>
+
+<div class="container">
+<table>
+<thead>
+<tr>
+<th>LV</th>
+<th>BOSS</th>
+<th>DAY</th>
+<th>INDO +7</th>
+<th>PH +8</th>
+<th>COUNTDOWN</th>
+<th>TIME STAMP</th>
+<th>ACTION</th>
+</tr>
+</thead>
+<tbody id="bossTable"></tbody>
+</table>
+<div class="footer">Timers update every second</div>
+</div>
+
+<script>
+const ADMIN_PASSWORD = "H7bossings";
+let isAdmin = false;
+
+const BOSSES = [
+/* INTERVAL */
+{lv:70,name:"Venatus",type:"interval",hours:10},
+{lv:70,name:"Viorent",type:"interval",hours:10},
+{lv:70,name:"Ego",type:"interval",hours:21},
+{lv:75,name:"Livera",type:"interval",hours:24},
+{lv:75,name:"Araneo",type:"interval",hours:24},
+{lv:75,name:"Undomiel",type:"interval",hours:24},
+{lv:80,name:"Lady Dalia",type:"interval",hours:18},
+{lv:85,name:"General Aquleus",type:"interval",hours:29},
+{lv:85,name:"Amentis",type:"interval",hours:29},
+{lv:88,name:"Baron Braudmore",type:"interval",hours:32},
+{lv:90,name:"Gareth",type:"interval",hours:32},
+{lv:90,name:"Shuliar",type:"interval",hours:35},
+{lv:90,name:"Larba",type:"interval",hours:35},
+{lv:90,name:"Catena",type:"interval",hours:35},
+{lv:92,name:"Titore",type:"interval",hours:37},
+{lv:93,name:"Wannitas",type:"interval",hours:48},
+{lv:93,name:"Metus",type:"interval",hours:48},
+{lv:93,name:"Duplican",type:"interval",hours:48},
+{lv:95,name:"Secreta",type:"interval",hours:62},
+{lv:95,name:"Ordo",type:"interval",hours:62},
+{lv:95,name:"Asta",type:"interval",hours:62},
+{lv:95,name:"Supore",type:"interval",hours:62},
+
+/* FIXED */
+{lv:90,name:"Milavy",type:"fixed",days:["Saturday"],time:"17:00"},
+{lv:90,name:"Ringor",type:"fixed",days:["Saturday"],time:"19:00"},
+{lv:90,name:"Roderick",type:"fixed",days:["Friday"],time:"21:00"},
+{lv:90,name:"Chaiflock",type:"fixed",days:["Saturday"],time:"00:00"},
+{lv:90,name:"Benji",type:"fixed",days:["Sunday"],time:"23:00"},
+{lv:90,name:"Nevaeh",type:"fixed",days:["Sunday"],time:"00:00"},
+
+/* MULTI DAY */
+{lv:90,name:"Clemantis",type:"fixed",days:["Monday","Thursday"],time:["13:30","21:00"]},
+{lv:90,name:"Saphirus",type:"fixed",days:["Sunday","Tuesday"],time:["19:00","13:30"]},
+{lv:90,name:"Thymele",type:"fixed",days:["Monday","Wednesday"],time:["21:00","13:30"]},
+{lv:90,name:"Auraq",type:"fixed",days:["Friday","Wednesday"],time:["00:00","23:00"]},
+{lv:90,name:"Icaruthia",type:"fixed",days:["Tuesday","Friday"],time:["23:00","23:00"]},
+{lv:90,name:"Motti",type:"fixed",days:["Wednesday","Saturday"],time:["21:00","21:00"]}
+];
+
+function nowPH(){
+    return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Manila"}));
+}
+
+function format(ms){
+    if(ms<=0) return "SPAWNED";
+    let s=Math.floor(ms/1000);
+    let h=Math.floor(s/3600);
+    let m=Math.floor((s%3600)/60);
+    let sec=s%60;
+    return `${h}h ${m}m ${sec}s`;
+}
+
+function loginAdmin(){
+    if(prompt("Admin password:")===ADMIN_PASSWORD){
+        isAdmin=true;
+        render();
+    }
+}
+
+function nextFixed(b){
+    let now=nowPH();
+    let best=null;
+
+    b.days.forEach((d,i)=>{
+        let t=b.time[i]||b.time[0];
+        let [hh,mm]=t.split(":");
+        let date=new Date(now);
+        let dayIndex=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].indexOf(d);
+        let diff=(dayIndex-now.getDay()+7)%7;
+        date.setDate(now.getDate()+diff);
+        date.setHours(hh,mm,0,0);
+        if(date<now) date.setDate(date.getDate()+7);
+        if(!best||date<best) best=date;
+    });
+    return best;
+}
+
+function render(){
+    const tb=document.getElementById("bossTable");
+    tb.innerHTML="";
+    BOSSES.forEach(b=>{
+        let next=b.type==="interval"
+            ? new Date(localStorage.getItem(b.name)||(()=>{let d=nowPH();d.setHours(d.getHours()+b.hours);localStorage.setItem(b.name,d);return d;})())
+            : nextFixed(b);
+
+        let diff=next-nowPH();
+        let cls=diff<=0?"countdown spawned":diff<=300000?"countdown warning":"countdown";
+
+        tb.innerHTML+=`
+        <tr>
+            <td>${b.lv}</td>
+            <td>${b.name}</td>
+            <td>${next.toLocaleDateString("en-US",{weekday:"short"})}</td>
+            <td>${new Date(next.getTime()-3600000).toLocaleTimeString()}</td>
+            <td>${next.toLocaleTimeString()}</td>
+            <td><span class="${cls}">${format(diff)}</span></td>
+            <td>${next.toLocaleString()}</td>
+            <td>${isAdmin&&b.type==="interval"?`<button class="reset" onclick="localStorage.removeItem('${b.name}')">Reset</button>`:""}
+                ${isAdmin&&b.type==="fixed"?`<button class="next" onclick="render()">Next</button>`:""}
+            </td>
+        </tr>`;
+    });
+}
+
+setInterval(render,1000);
+render();
+</script>
+</body>
+</html>
